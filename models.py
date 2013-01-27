@@ -21,7 +21,10 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-from ckeditor.fields import HTMLField
+try:
+    from ckeditor.fields import HTMLField
+except ImportError:
+    from ckeditor.fields import RichTextField as HTMLField
 
 class PreferenceManager(models.Manager):
     def get_default(self):
