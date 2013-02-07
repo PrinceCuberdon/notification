@@ -119,10 +119,10 @@ class Notification(object):
             msg['From'] = self.pref.sendmail
             msg['To'] = notif['dest']
             msg['Subject'] = notif['subject']
-            textpart = MIMEText(notif['body'],'plain', 'utf-8')
+            #textpart = MIMEText(notif['body'],'plain', 'utf-8')
             htmlpart = MIMEText('<html><body>' + notif['body'] + '</body></html>', 'html', 'utf-8')
             msg.attach(htmlpart)
-            msg.attach(textpart)
+            #msg.attach(textpart)
                             
             if debug == False:
                 if email_re.match(notif['dest']):
