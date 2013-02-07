@@ -24,7 +24,10 @@ from django.core.exceptions import ObjectDoesNotExist
 try:
     from ckeditor.fields import HTMLField
 except ImportError:
-    from ckeditor.fields import RichTextField as HTMLField
+    try:
+        from ckeditor.fields import RichTextField as HTMLField
+    except ImportError:
+        from django.db.models import TextField as HTMLField
 
 class PreferenceManager(models.Manager):
     def get_default(self):

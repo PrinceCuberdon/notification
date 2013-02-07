@@ -29,7 +29,7 @@ from django.http import Http404
 from django.conf import settings
 from django.core.validators import email_re
 
-from notification.models import Preference, Template
+from .models import Preference, Template
 
 
 def notification_send(template_shortcut, dest=None, context=None, account_name=None):
