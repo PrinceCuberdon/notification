@@ -20,7 +20,7 @@
 from django.contrib import admin
 from django.conf import settings
 
-from notification.models import *
+from libs.notification.models import *
 
 class BaseAdmin(admin.ModelAdmin):
     class Media:

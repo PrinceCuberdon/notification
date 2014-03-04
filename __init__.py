@@ -6,12 +6,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -22,6 +22,7 @@ from email.mime.multipart import MIMEMultipart
 import sys
 import os
 import datetime
+import codecs
 
 from django import template
 from django.core.exceptions import ObjectDoesNotExist
@@ -37,30 +38,31 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
     pref = None
     try:
         if account_name is not None:
-            pref= Preference.objects.get(name=account_name)
+            pref = Preference.objects.get(name=account_name)
         else:
             pref = Preference.objects.get_default()
     except ObjectDoesNotExist:
         raise Http404()
-            
+
     if dest is None:
         dest = pref.webmaster
     try:
         notif = Notification(template_shortcut)
         notif.push(dest, context)
         notif.send()
-        
-    except ObjectDoesNotExist:
+
+    except ObjectDoesNotExist as error:
+        ajax_log("notification.notification_send: %s" % error)
         return False
-    
+
     except smtplib.SMTPException as error:
         """ Can't send the email """
         ajax_log("notification.notification_send: %s" % error)
         return False
-    
+
     except Exception as error:
         ajax_log("notification.notification_send : %s" % error)
-    
+
     return True
 
 class NotificationError(Exception):
@@ -79,21 +81,21 @@ class Notification(object):
                 self.connection.helo()
         else:
             self.connection = None
-            
+
         self.subject = None
         self.body = None
-            
+
     def __del__(self):
         try:
             self.connection.quit()
         except AttributeError:
             pass
-        
+
     def push(self, dest, context=None, shortcut=None):
         """ Push notifications in a stack """
         if shortcut is None:
             shortcut = self.shortcut
-            
+
         if self.shortcut is None:
             if self.subject is None or self.body is None:
                 raise NotificationError("Subject or body not set")
@@ -101,7 +103,7 @@ class Notification(object):
             body = self.body
         else:
             subject, body = self.render_template(self.shortcut, context)
-            
+
         self.notif.append({
             'subject' : subject,
             'body': body,
@@ -123,7 +125,7 @@ class Notification(object):
             htmlpart = MIMEText('<html><body>' + notif['body'] + '</body></html>', 'html', 'utf-8')
             msg.attach(htmlpart)
             #msg.attach(textpart)
-                            
+
             if debug == False:
                 if email_re.match(notif['dest']):
                     # Ensure email is a valid one
@@ -138,23 +140,25 @@ class Notification(object):
         if context is not None:
             subject = template.Template(subject).render(context)
             body = template.Template(body).render(context)
-        
+
         return subject, body
-            
+
     def set_content(self, subject, body):
-        """ Set the content mail directly (no templates) 
+        """ Set the content mail directly (no templates)
         @see MailingList model """
         self.subject = subject
         self.body = body
- 
+
 def ajax_log(message, testing=False):
     """ Write a message for debugging ajax calls (Prefer this method over logging std call """
-    message = "%s : %s" % (datetime.datetime.today(), message)
-    open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"), 'a').write("%s\n" % message)
-    if (settings.DEBUG and settings.IS_LOCAL) and not testing:
-        """ Write message on the default out put """
-        print >> sys.stderr, message
-
+    try:
+        message = "%s : %s" % (datetime.datetime.today(), message)
+        codecs.open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"),"a").write(u"%s \n" % message)
+        if (settings.DEBUG and settings.IS_LOCAL) and not testing:
+            """ Write message on the default out put """
+            print >> sys.stderr, message
+    except:
+        pass
     #if Preferences.objects.filter(default_accout=True)[0].send_to_admin == True:
     #    notification_send()
 
