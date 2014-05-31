@@ -21,19 +21,11 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 
-try:
-    from ckeditor.fields import HTMLField
-except ImportError:
-    try:
-        from ckeditor.fields import RichTextField as HTMLField
-    except ImportError:
-        from django.db.models import TextField as HTMLField
-
 class PreferenceManager(models.Manager):
     def get_default(self):
         """ Return the current preference """
         return Preference.objects.filter(default_account=True).latest('id') #, active=True)
-        
+
 class Preference(models.Model):
     name = models.CharField(max_length=40, help_text=u"Nom du serveur", verbose_name=u"Nom")
     webmaster = models.EmailField(help_text=u"Adresse mail du webmaster", blank=True)
@@ -68,7 +60,7 @@ class MailingList(models.Model):
     """ Todo: this model must be widly modified """
     creation = models.DateField(auto_now=True)
     subject = models.CharField(max_length=150, help_text="Sujet du message", verbose_name="Sujet")
-    content = HTMLField(verbose_name="Message", help_text="Corps du message.")
+    content = models.TextField(verbose_name="Message", help_text="Corps du message.")
     
     send_to_all = models.BooleanField(default=False,
                                       verbose_name=u"Envoyer à tous", 
@@ -106,7 +98,7 @@ class MailingList(models.Model):
             else:
                 users = authusers
                     
-            from notification import Notification
+            from libs.notification import Notification
             
             notif = Notification(debug=settings.IS_LOCAL)
             notif.set_content(self.subject, self.content)

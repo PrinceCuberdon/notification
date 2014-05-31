@@ -28,7 +28,7 @@ from django.http import Http404
 from django.template import Context
 from django.contrib.auth.models import User
 
-from bandcochon.models import Utilisateur #, Picture, TownShip, Town, Place
+from core.bandcochon.models import Utilisateur #, Picture, TownShip, Town, Place
 from .models import Preference, Template, MailingList
 from . import ajax_log, notification_send
 
