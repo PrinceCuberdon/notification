@@ -28,14 +28,18 @@ from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.conf import settings
-from django.core.validators import email_re
+from django.core.validators import validate_email, ValidationError
 
 from .models import Preference, Template
 
 
 def notification_send(template_shortcut, dest=None, context=None, account_name=None):
     """ Send an email based on a shortcut """
-    pref = None
+
+    # When developping,
+    if settings.IS_LOCAL or settings.IS_TESTING:
+        return True
+
     try:
         if account_name is not None:
             pref = Preference.objects.get(name=account_name)
@@ -50,26 +54,28 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
         notif = Notification(template_shortcut)
         notif.push(dest, context)
         notif.send()
+        return True
 
     except ObjectDoesNotExist as error:
         ajax_log("notification.notification_send: %s" % error)
-        return False
 
     except smtplib.SMTPException as error:
         """ Can't send the email """
         ajax_log("notification.notification_send: %s" % error)
-        return False
 
     except Exception as error:
         ajax_log("notification.notification_send : %s" % error)
 
-    return True
+    return False
 
 class NotificationError(Exception):
     pass
 
 class Notification(object):
     def __init__(self, template_shortcut=None, debug=False):
+        if settings.IS_LOCAL or settings.IS_TESTING or debug:
+            return
+
         self.notif = []
         self.shortcut = template_shortcut
         self.pref = Preference.objects.get_default()
@@ -93,6 +99,9 @@ class Notification(object):
 
     def push(self, dest, context=None, shortcut=None):
         """ Push notifications in a stack """
+        if settings.IS_LOCAL or settings.IS_TESTING or debug:
+            return
+
         if shortcut is None:
             shortcut = self.shortcut
 
@@ -112,7 +121,7 @@ class Notification(object):
 
     def send(self, debug=False):
         """ Send all mails pushed """
-        if settings.IS_BETA or settings.IS_LOCAL:
+        if settings.IS_LOCAL or settings.IS_TESTING or debug:
             return
 
         for notif in self.notif:
@@ -127,11 +136,12 @@ class Notification(object):
             #msg.attach(textpart)
 
             if debug == False:
-                if email_re.match(notif['dest']):
+                try:
                     # Ensure email is a valid one
+                    validate_email(notif['dest'])
                     self.connection.sendmail(self.pref.sendmail, notif['dest'], msg.as_string())
-            else:
-                print msg.as_string()
+                except ValidationError:
+                    pass
 
     def render_template(self, template_shortcut, context):
         temp = Template.objects.get(shortcut=template_shortcut)
