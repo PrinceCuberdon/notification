@@ -99,7 +99,7 @@ class Notification(object):
 
     def push(self, dest, context=None, shortcut=None):
         """ Push notifications in a stack """
-        if settings.IS_LOCAL or settings.IS_TESTING or debug:
+        if settings.IS_LOCAL or settings.IS_TESTING:
             return
 
         if shortcut is None:
