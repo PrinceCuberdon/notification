@@ -18,9 +18,8 @@
 # Band Cochon (c) Prince Cuberdon 2011 and Later <princecuberdon@bandcochon.fr>
 
 from django.contrib import admin
-from django.conf import settings
 
-from libs.notification.models import *
+from notification.models import *
 
 class BaseAdmin(admin.ModelAdmin):
     class Media:

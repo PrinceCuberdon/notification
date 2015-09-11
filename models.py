@@ -101,7 +101,7 @@ class MailingList(models.Model):
             else:
                 users = authusers
 
-            from libs.notification import Notification
+            from notification import Notification
 
             notif = Notification(debug=settings.IS_LOCAL)
             notif.set_content(self.subject, self.content)
