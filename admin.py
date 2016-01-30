@@ -19,19 +19,23 @@
 
 from django.contrib import admin
 
-from notification.models import *
+from .models import Preference, Template, MailingList
+
 
 class BaseAdmin(admin.ModelAdmin):
     class Media:
         js = (
-                'http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js',
+            'http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js',
         )
 
+
 class TemplateAdmin(BaseAdmin):
-    list_display = ('resume', 'shortcut', )
-    
+    list_display = ('resume', 'shortcut',)
+
+
 class PreferenceAdmin(BaseAdmin):
     list_display = ('name', 'default2string', 'sendmail', 'anonymous', 'username', 'offuscate_pass', 'server',)
+
 
 admin.site.register(Preference, PreferenceAdmin)
 admin.site.register(Template, TemplateAdmin)

@@ -93,7 +93,7 @@ class MailingList(models.Model):
             if self.send_to_inactive:
                 for u in authusers:
                     try:
-                        if u.get_profile().get_picture_count() == 0:
+                        if u.profile.get_picture_count() == 0:
                             users.append(u)
                     except ObjectDoesNotExist:
                         pass

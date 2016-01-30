@@ -30,11 +30,10 @@ from django.http import Http404
 from django.conf import settings
 from django.core.validators import validate_email, ValidationError
 
-from .models import Preference, Template
-
 
 def notification_send(template_shortcut, dest=None, context=None, account_name=None):
     """ Send an email based on a shortcut """
+    from .models import Preference
 
     # When developping,
     if settings.IS_LOCAL or settings.IS_TESTING:
@@ -68,13 +67,17 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
 
     return False
 
+
 class NotificationError(Exception):
     pass
+
 
 class Notification(object):
     def __init__(self, template_shortcut=None, debug=False):
         if settings.IS_LOCAL or settings.IS_TESTING or debug:
             return
+
+        from .models import Preference
 
         self.notif = []
         self.shortcut = template_shortcut
@@ -102,9 +105,6 @@ class Notification(object):
         if settings.IS_LOCAL or settings.IS_TESTING:
             return
 
-        if shortcut is None:
-            shortcut = self.shortcut
-
         if self.shortcut is None:
             if self.subject is None or self.body is None:
                 raise NotificationError("Subject or body not set")
@@ -114,7 +114,7 @@ class Notification(object):
             subject, body = self.render_template(self.shortcut, context)
 
         self.notif.append({
-            'subject' : subject,
+            'subject': subject,
             'body': body,
             'dest': dest
         })
@@ -130,10 +130,10 @@ class Notification(object):
             msg['From'] = self.pref.sendmail
             msg['To'] = notif['dest']
             msg['Subject'] = notif['subject']
-            #textpart = MIMEText(notif['body'],'plain', 'utf-8')
+            # textpart = MIMEText(notif['body'],'plain', 'utf-8')
             htmlpart = MIMEText('<html><body>' + notif['body'] + '</body></html>', 'html', 'utf-8')
             msg.attach(htmlpart)
-            #msg.attach(textpart)
+            # msg.attach(textpart)
 
             if debug == False:
                 try:
@@ -144,6 +144,8 @@ class Notification(object):
                     pass
 
     def render_template(self, template_shortcut, context):
+        from .models import Template
+
         temp = Template.objects.get(shortcut=template_shortcut)
         body = u"%s" % temp.body
         subject = u"%s" % temp.subject
@@ -159,16 +161,16 @@ class Notification(object):
         self.subject = subject
         self.body = body
 
+
 def ajax_log(message, testing=False):
     """ Write a message for debugging ajax calls (Prefer this method over logging std call """
     try:
         message = "%s : %s" % (datetime.datetime.today(), message)
-        codecs.open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"),"a").write(u"%s \n" % message)
+        codecs.open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"), "a").write(u"%s \n" % message)
         if (settings.DEBUG and settings.IS_LOCAL) and not testing:
             """ Write message on the default out put """
             print >> sys.stderr, message
     except:
         pass
-    #if Preferences.objects.filter(default_accout=True)[0].send_to_admin == True:
-    #    notification_send()
-
+        # if Preferences.objects.filter(default_accout=True)[0].send_to_admin == True:
+        #    notification_send()
