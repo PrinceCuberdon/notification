@@ -20,6 +20,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 import sys
+from django.utils import timezone
 import os
 import datetime
 import codecs
@@ -165,7 +166,7 @@ class Notification(object):
 def ajax_log(message, testing=False):
     """ Write a message for debugging ajax calls (Prefer this method over logging std call """
     try:
-        message = "%s : %s" % (datetime.datetime.today(), message)
+        message = "%s : %s" % (timezone.today(), message)
         codecs.open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"), "a").write(u"%s \n" % message)
         if (settings.DEBUG and settings.IS_LOCAL) and not testing:
             """ Write message on the default out put """
