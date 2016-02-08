@@ -13,7 +13,6 @@ from django.test import TestCase
 from django.http import Http404
 from django.template import Context
 from django.contrib.auth.models import User
-
 import minimock
 
 from core.bandcochon.models import Utilisateur
@@ -156,6 +155,8 @@ class TestMailingList(TestThatNeedServer):
         Utilisateur.objects.create(user=self.user1)
         user2 = User.objects.create(username="user2", email="user1@user2.com")
         Utilisateur.objects.create(user=user2)
+
+        super(TestMailingList, self).setUp()
 
     def test_send_to_nobody(self):
         """ Does nothing. Just saving """
