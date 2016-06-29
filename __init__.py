@@ -6,17 +6,15 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-import sys
-from django.utils import timezone
-import os
-import codecs
+import logging
 
 from django import template
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
 from django.conf import settings
 from django.core.validators import validate_email, ValidationError
+
+L = logging.getLogger("notification")
 
 
 def notification_send(template_shortcut, dest=None, context=None, account_name=None):
@@ -30,6 +28,7 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
             pref = Preference.objects.get_default()
 
     except ObjectDoesNotExist:
+        L.error(u"notification.notification_send: The account_name '%s' is not found" % account_name)
         raise Http404()
 
     if dest is None:
@@ -42,14 +41,14 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
         return True
 
     except ObjectDoesNotExist as error:
-        ajax_log("notification.notification_send: %s" % error)
+        L.error(u"notification.notification_send: %s" % error)
 
     except smtplib.SMTPException as error:
         """ Can't send the email """
-        ajax_log("notification.notification_send: %s" % error)
+        L.error(u"notification.notification_send: %s" % error)
 
     except Exception as error:
-        ajax_log("notification.notification_send : %s" % error)
+        L.error(u"notification.notification_send : %s" % error)
 
     return False
 
@@ -85,14 +84,17 @@ class Notification(object):
 
     def push(self, dest, context=None, shortcut=None):
         """ Push notifications in a stack """
+        sc = shortcut if shortcut is not None else self.shortcut
 
-        if self.shortcut is None:
+        if sc is None:
             if self.subject is None or self.body is None:
+                L.error("notification.Notification.push: Subject or body not set")
                 raise NotificationError("Subject or body not set")
+
             subject = self.subject
             body = self.body
         else:
-            subject, body = self.render_template(self.shortcut, context)
+            subject, body = self.render_template(sc, context)
 
         self.notif.append({
             'subject': subject,
@@ -101,8 +103,11 @@ class Notification(object):
         })
 
     def send(self, debug=False):
-        """ Send all mails pushed """
-        if settings.IS_LOCAL or settings.IS_TESTING or debug:
+        """
+        Send all mails pushed.
+        Do nothing on debug mode
+        """
+        if settings.IS_LOCAL or debug:
             return
 
         for notif in self.notif:
@@ -119,8 +124,8 @@ class Notification(object):
                     # Ensure email is a valid one
                     validate_email(notif['dest'])
                     self.connection.sendmail(self.pref.sendmail, notif['dest'], msg.as_string())
-                except ValidationError:
-                    pass
+                except ValidationError as e:
+                    L.error(u"notification.Notification.send: Unable to send a emain. Reasons: %s" % e)
 
     def render_template(self, template_shortcut, context):
         from .models import Template
@@ -139,15 +144,3 @@ class Notification(object):
         @see MailingList model """
         self.subject = subject
         self.body = body
-
-
-def ajax_log(message, testing=False):
-    """ Write a message for debugging ajax calls (Prefer this method over logging std call """
-    try:
-        message = "%s : %s" % (timezone.today(), message)
-        codecs.open(os.path.join(settings.MEDIA_ROOT, "ajax_log.txt"), "a").write(u"%s \n" % message)
-        if (settings.DEBUG and settings.IS_LOCAL) and not testing:
-            """ Write message on the default out put """
-            print >> sys.stderr, message
-    except:
-        pass
