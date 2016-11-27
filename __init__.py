@@ -28,7 +28,7 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
             pref = Preference.objects.get_default()
 
     except ObjectDoesNotExist:
-        L.error(u"notification.notification_send: The account_name '%s' is not found" % account_name)
+        L.error(u"notification.notification_send: The account_name '{name}' is not found".format(name=account_name))
         raise Http404()
 
     if dest is None:
@@ -41,14 +41,14 @@ def notification_send(template_shortcut, dest=None, context=None, account_name=N
         return True
 
     except ObjectDoesNotExist as error:
-        L.error(u"notification.notification_send: %s" % error)
+        L.error(u"notification.notification_send: {error}".format(error=error))
 
     except smtplib.SMTPException as error:
         """ Can't send the email """
-        L.error(u"notification.notification_send: %s" % error)
+        L.error(u"notification.notification_send: {error}".format(error=error))
 
     except Exception as error:
-        L.error(u"notification.notification_send : %s" % error)
+        L.error(u"notification.notification_send : {error}".format(error=error))
 
     return False
 
@@ -125,7 +125,7 @@ class Notification(object):
                     validate_email(notif['dest'])
                     self.connection.sendmail(self.pref.sendmail, notif['dest'], msg.as_string())
                 except ValidationError as e:
-                    L.error(u"notification.Notification.send: Unable to send a emain. Reasons: %s" % e)
+                    L.error(u"notification.Notification.send: Unable to send a emain. Reasons: {error}".format(error=e))
 
     def render_template(self, template_shortcut, context):
         from .models import Template
