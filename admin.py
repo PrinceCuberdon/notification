@@ -4,13 +4,13 @@
 
 from django.contrib import admin
 
-from .models import Preference, Template, MailingList
+from .models import Template
 
 
 class BaseAdmin(admin.ModelAdmin):
     class Media:
         js = (
-            'http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js',
+            'https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js',
         )
 
 
@@ -22,6 +22,4 @@ class PreferenceAdmin(BaseAdmin):
     list_display = ('name', 'default2string', 'sendmail', 'anonymous', 'username', 'offuscate_pass', 'server',)
 
 
-admin.site.register(Preference, PreferenceAdmin)
 admin.site.register(Template, TemplateAdmin)
-admin.site.register(MailingList, BaseAdmin)
