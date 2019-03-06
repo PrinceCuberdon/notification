@@ -66,15 +66,11 @@ class Notification(object):
             'dest': dest
         })
 
-    def send(self, debug=False):
+    def send(self):
         """
         Send all mails pushed.
         Do nothing on debug mode
         """
-        if settings.IS_LOCAL or debug:
-            L.debug("We are in local. Go back")
-            return
-
         for notif in self.notif:
             send_mail(subject=notif['subject'],
                       recipient_list=[notif['dest']],
